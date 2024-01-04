@@ -1,11 +1,11 @@
-# Import necessary libraries
 from flask import Flask,request,render_template
-import pandas as py
 import numpy as np
-import pickle
+import pickle 
+# loading the model pickle file
+model=pickle.load(open('lin_model.pkl','rb'))
 
+application=Flask(__name__)
 
-# Giving the Label Encoded Values and Original Values in a dictionary format and assgining it to a variable. 
 Status  = {
 "New" : 0,"Ready to move" : 1,"Resale" : 2,"Under Construction" : 3,}
 
@@ -18,35 +18,29 @@ Facing  = {
 Type  = {
 "Apartment" : 0,"Independent Floor" : 1,"Independent House" : 2,"Residential Plot" : 3,"Studio Apartment" : 4,"Villa" : 5,}
 
-# Loading the Model pickle file
-model =  pickle.load(open('lin_model.pkl','rb'))
-
-# Create a Flask application instance
-application = Flask(__name__)
-
 @application.route('/')
 def index():
-    """
-    Route decorator to handle requests to the root URL.
-    
-    Returns:
-        str: A greeting message.
-    """
-    return "Hello Kits."
+    return render_template('index.html',Status=Status,Location=Location,Facing=Facing,Type=Type)
 
 @application.route('/home')
 def home():
-    """
-    A function that handles the '/home' route.
+    return "Hello Codegnan!"
 
-    Returns:
-        str: A string containing the message "Hello Codegnan."
-    """
-    return "Hello Codegnan."
+@application.route('/predict',methods=['POST'])
+def res():
+    bedrooms=int(request.form['bedrooms'])
+    bathrooms=int(request.form['bathrooms'])
+    status=int(request.form['status'])
+    size=int(request.form['area'])
+    location=int(request.form['location'])
+    facing=int(request.form['facing'])
+    Types=int(request.form['type'])
 
-# Run the Flask application if this script is the main entry point
+    user_input=np.array([[bedrooms,bathrooms,status,size,location,facing,Types]])
+    res=model.predict(user_input)[0].round(2)
+    return render_template('index.html',prediction=res,Status=Status,Location=Location,Facing=Facing,Type=Type)
+    
+
+
 if __name__=="__main__":
-    application.run()
-
-
-
+    application.run(use_reloader=True,debug=True)
